@@ -70,10 +70,10 @@ nsapi_error_t UBLOX_AT_CellularNetwork::set_access_technology_impl(RadioAccessTe
             break;
         case RAT_HSDPA_HSUPA:
             break;
-#elif defined(TARGET_UBLOX_C030_R410M)
+#elif defined(TARGET_UBLOX_C030_R410M) || defined(TARGET_MTS_DRAGONFLY_L471QG)
         case RAT_CATM1:
             break;
-#elif defined(TARGET_UBLOX_C030_R410M) || defined(TARGET_UBLOX_C030_N211)
+#elif defined(TARGET_UBLOX_C030_R410M) || defined(TARGET_UBLOX_C030_N211) || defined(TARGET_MTS_DRAGONFLY_L471QG)
         case RAT_NB1:
             break;
 #endif
@@ -92,7 +92,7 @@ nsapi_error_t UBLOX_AT_CellularNetwork::connect()
     nsapi_error_t err = NSAPI_ERROR_NO_CONNECTION;
 
     // Attempt to establish a connection
-#ifdef TARGET_UBLOX_C030_R410M
+#if defined(TARGET_UBLOX_C030_R410M) || defined(TARGET_MTS_DRAGONFLY_L471QG)
     err = NSAPI_ERROR_OK;
 #else
     err = open_data_channel();

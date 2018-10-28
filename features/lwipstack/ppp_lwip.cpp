@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <string>
+#include <stdio.h>
 
 #include <errno.h>
 #include "platform/FileHandle.h"
@@ -79,6 +81,41 @@ static EventQueue *prepare_event_queue()
     return event_queue;
 }
 
+#if (0)
+
+static std::string pppLoggingPacket = "";
+static char pppDigits[4];
+static int pppPacketLength = 0;
+
+static void logInitPacket(std::string prefix)
+{
+    pppLoggingPacket = prefix;
+    pppPacketLength = 0;
+}
+static void logFillPacket(u8_t *data, u32_t len)
+{
+    for (u32_t i = 0; i < len; i++)
+    {
+        snprintf(pppDigits, 4, "%02X ", data[i]);
+        pppLoggingPacket.append(pppDigits);
+        pppPacketLength++;
+    }
+}
+
+static void logPrintPacket(void)
+{
+    if (pppPacketLength)
+    {
+        pppLoggingPacket.append("\r\n");
+        puts(pppLoggingPacket.c_str());
+    }
+}
+#else
+#define logInitPacket(p)
+#define logFillPacket(d, l)
+#define logPrintPacket()
+#endif
+
 static u32_t ppp_output(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx)
 {
     FileHandle *stream = my_stream;
@@ -89,6 +126,10 @@ static u32_t ppp_output(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx)
     pollfh fhs;
     fhs.fh = stream;
     fhs.events = POLLOUT;
+
+//    logInitPacket(std::string("tx "));
+//    logFillPacket(data, len);
+//    logPrintPacket();
 
     // LWIP expects us to block on write
     // File handle will be in non-blocking mode, because of read events.
@@ -254,6 +295,7 @@ static void ppp_input()
 
     // Infinite loop, but we assume that we can read faster than the
     // serial, so we will fairly rapidly hit -EAGAIN.
+    logInitPacket(std::string("rx "));
     for (;;) {
         u8_t buffer[16];
         ssize_t len = my_stream->read(buffer, sizeof buffer);
@@ -263,8 +305,12 @@ static void ppp_input()
             handle_modem_hangup();
             return;
         }
+        logFillPacket(buffer, len);
+
         pppos_input(my_ppp_pcb, buffer, len);
     }
+    logPrintPacket();
+
     return;
 }
 
